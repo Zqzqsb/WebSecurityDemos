@@ -1,107 +1,146 @@
 # CSRF（跨站请求伪造）攻击演示
 
-这个项目演示了CSRF（Cross-Site Request Forgery）攻击的原理、实现和防护方法。
+这个项目演示了CSRF（Cross-Site Request Forgery）攻击的原理、实现和防护方法。通过一个模拟的银行转账系统，展示了CSRF攻击的危险性以及相应的防护措施。
 
-## 项目概述
+## 功能特点
 
-本项目模拟了一个简单的资金转账系统，包含以下功能：
-- 不安全的转账接口（易受CSRF攻击）
-- 安全的转账接口（使用CSRF Token保护）
-- CSRF攻击模拟
-- 完整的防护示例
+1. **转账系统模拟**
+   - 用户余额管理
+   - 转账交易记录
+   - 实时余额更新
+   - 完整的事务处理
 
-## 运行方法
+2. **不安全的转账接口**
+   - 路径：`/transfer/unsafe`
+   - 无CSRF保护
+   - 易受攻击的表单提交
+   - 完整的错误处理
 
-1. 安装依赖：
+3. **安全的转账接口**
+   - 路径：`/transfer/safe`
+   - CSRF Token保护
+   - 安全的表单提交
+   - 事务完整性保证
+
+4. **安全特性**
+   - CSRF Token生成和验证
+   - 数据库事务处理
+   - 输入验证和过滤
+   - 错误处理和日志记录
+
+## 系统要求
+
+- Go 1.16+
+- SQLite3
+- 现代Web浏览器
+
+## 安装步骤
+
+1. 克隆仓库：
+```bash
+git clone [repository-url]
+cd CSRF_Attack
+```
+
+2. 安装依赖：
 ```bash
 go mod tidy
 ```
 
-2. 运行服务器：
+3. 运行应用：
 ```bash
 go run main.go
 ```
 
-3. 访问演示页面：
+4. 访问演示页面：
 ```
 http://localhost:8080
 ```
 
-## 功能说明
+## 功能演示
 
-### 1. 不安全的转账接口
-- 路径：`/transfer/unsafe`
-- 特点：没有任何CSRF保护
-- 漏洞：可以被跨站请求伪造攻击利用
+### 1. 基本转账操作
 
-### 2. 安全的转账接口
-- 路径：`/transfer/safe`
-- 特点：使用CSRF Token保护
-- 安全措施：每个请求都需要验证CSRF Token
+1. 访问主页面
+2. 在转账表单中输入：
+   - 接收方用户名
+   - 转账金额
+3. 点击"Transfer"按钮
+4. 观察转账结果和余额变化
 
-### 3. 攻击演示
-项目包含了以下攻击场景：
-- 基本CSRF攻击
-- 自动提交表单攻击
-- 隐藏表单攻击
+### 2. CSRF攻击演示
 
-## 攻击演示步骤
+1. 不安全的转账：
+   - 使用不带CSRF保护的表单
+   - 观察转账是否成功
+   - 查看交易记录
 
-1. 基本CSRF攻击：
-   - 访问主页面
-   - 点击"Simulate CSRF Attack"按钮
-   - 观察未经授权的转账是否成功
+2. 安全的转账：
+   - 使用带CSRF Token的表单
+   - 尝试绕过Token验证
+   - 观察安全机制的效果
 
-2. 跨站点攻击：
-   - 复制攻击代码到另一个域名下
-   - 访问含有攻击代码的页面
-   - 观察是否触发自动转账
+### 3. 攻击模拟
 
-## 防护措施
+点击"Simulate CSRF Attack"按钮，将会：
+- 创建隐藏的恶意表单
+- 自动提交转账请求
+- 展示攻击结果
 
-1. CSRF Token
-```go
-// 生成Token
-token := generateCSRFToken()
-csrfTokens.Store(userID, token)
+## 安全特性说明
 
-// 验证Token
-if token != expectedToken {
-    return errors.New("invalid CSRF token")
-}
+1. **CSRF Token保护**
+   - 每个会话生成唯一Token
+   - 表单提交需要验证Token
+   - Token通过安全的方式传输
+
+2. **交易安全**
+   - 完整的事务处理
+   - 余额检查
+   - 用户验证
+   - 金额验证
+
+3. **错误处理**
+   - 详细的错误信息
+   - 事务回滚
+   - 用户友好的提示
+
+## API说明
+
+### 不安全的转账接口
+```
+POST /transfer/unsafe
+参数：
+- to: 接收方用户名
+- amount: 转账金额
 ```
 
-2. 验证请求来源
-```go
-// 检查Referer头
-if !isValidReferer(c.Request.Referer()) {
-    return errors.New("invalid referer")
-}
+### 安全的转账接口
 ```
-
-3. SameSite Cookie
-```go
-// 设置SameSite属性
-c.SetCookie("session", token, 3600, "/", "", true, true)
-```
-
-4. 自定义请求头
-```javascript
-// 添加自定义头
-fetch('/api/transfer', {
-    headers: {
-        'X-CSRF-Token': token
-    }
-})
+POST /transfer/safe
+头部：
+- X-CSRF-Token: CSRF令牌
+参数：
+- to: 接收方用户名
+- amount: 转账金额
 ```
 
 ## 最佳实践
 
-1. 始终使用CSRF Token保护POST请求
-2. 实施适当的会话管理
-3. 使用SameSite Cookie属性
-4. 验证请求来源
-5. 避免在GET请求中修改状态
+1. **CSRF防护**
+   - 使用CSRF Token
+   - 验证请求来源
+   - 使用安全的Cookie设置
+
+2. **数据安全**
+   - 使用事务处理
+   - 验证所有输入
+   - 适当的错误处理
+
+3. **用户体验**
+   - 清晰的错误提示
+   - 实时的余额更新
+   - 交易历史记录
 
 ## 注意事项
 
@@ -110,8 +149,23 @@ fetch('/api/transfer', {
 3. 在实际应用中应始终使用安全的实现方式
 4. 建议在隔离的环境中进行测试
 
+## 故障排除
+
+1. 数据库错误
+   - 检查SQLite数据库文件权限
+   - 确保数据库连接正确
+
+2. CSRF Token错误
+   - 检查Token是否正确传递
+   - 确认Token未过期
+
+3. 转账失败
+   - 检查余额是否充足
+   - 验证用户名是否正确
+   - 确认金额格式正确
+
 ## 参考资源
 
 - [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 - [MDN Web Security](https://developer.mozilla.org/en-US/docs/Web/Security)
-- [CSRF Attacks and Defense](https://www.neuralegion.com/blog/csrf-attack/)
+- [Go Web Examples](https://gowebexamples.com/)
